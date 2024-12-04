@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "848719277859",
+    "project_id": "magiclens-27993",
+    "storage_bucket": "magiclens-27993.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848719277859:android:74e599b770140e2eb6e696",
+        "android_client_info": {
+          "package_name": "com.company.MagicLens"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSL7ffB1_s-MPU8fewyK8sslh2ZSs8RgA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
