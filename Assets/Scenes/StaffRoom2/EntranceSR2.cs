@@ -13,7 +13,7 @@ public class EntranceSR2 : MonoBehaviour
     public GameObject LecRoom101;
     public GameObject LecRoom103;
     public GameObject StudyArea;
-    public GameObject StuffOffice1;
+    public GameObject StaffOffice1;
 
     private void Start()
     {
@@ -48,7 +48,7 @@ public class EntranceSR2 : MonoBehaviour
                 StudyArea.SetActive(true);
                 break;
             case "Staff Office 1":
-                StuffOffice1.SetActive(true);
+                StaffOffice1.SetActive(true);
                 break;
             default:
                 Debug.LogWarning("Unknown destination selected!");
@@ -62,6 +62,6 @@ public class EntranceSR2 : MonoBehaviour
         LecRoom101.SetActive(false);
         LecRoom103.SetActive(false);
         StudyArea.SetActive(false);
-        StuffOffice1.SetActive(false);
+        StaffOffice1.SetActive(false);
     }
 }

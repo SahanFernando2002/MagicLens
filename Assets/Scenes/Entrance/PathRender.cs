@@ -43,8 +43,8 @@ public class PathRender : MonoBehaviour
     {
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = 0;
-        lineRenderer.startWidth = 0.8f;
-        lineRenderer.endWidth = 0.8f;
+        lineRenderer.startWidth = 1.5f;
+        lineRenderer.endWidth = 1.5f;
         lineRenderer.material = dottedLineMaterial != null ? dottedLineMaterial : new Material(Shader.Find("Sprites/Default"));
         lineRenderer.startColor = Color.green;
         lineRenderer.endColor = Color.red;

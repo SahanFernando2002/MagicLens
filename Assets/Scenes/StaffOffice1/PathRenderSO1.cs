@@ -30,7 +30,7 @@ public class PathRenderSO1 : MonoBehaviour
     public GameObject Entrance;
     public GameObject LecRoom101;
     public GameObject LecRoom103;
-    public GameObject StaffOffice1;
+    public GameObject StudyArea;
     public GameObject StaffRoom2;
 
     private Transform currentDestination;
@@ -110,7 +110,7 @@ public class PathRenderSO1 : MonoBehaviour
         if (Entrance.activeSelf) return Entrance.transform;
         if (LecRoom101.activeSelf) return LecRoom101.transform;
         if (LecRoom103.activeSelf) return LecRoom103.transform;
-        if (StaffOffice1.activeSelf) return StaffOffice1.transform;
+        if (StudyArea.activeSelf) return StudyArea.transform;
         if (StaffRoom2.activeSelf) return StaffRoom2.transform;
         return null;
     }
@@ -233,9 +233,9 @@ public class PathRenderSO1 : MonoBehaviour
     private string GetActiveDestinationName()
     {
         if (Entrance.activeSelf) return "Entrance";
-        if (LecRoom101.activeSelf) return "LecRoom101";
-        if (LecRoom103.activeSelf) return "LecRoom103";
-        if (StaffOffice1.activeSelf) return "StaffOffice1";
+        if (LecRoom101.activeSelf) return "LectureRoom101";
+        if (LecRoom103.activeSelf) return "LectureRoom103";
+        if (StudyArea.activeSelf) return "StudyArea";
         if (StaffRoom2.activeSelf) return "StaffRoom2";
         return "Unknown";
     }

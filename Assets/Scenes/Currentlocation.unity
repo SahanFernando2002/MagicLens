@@ -370,7 +370,7 @@ MonoBehaviour:
     - m_Text: 'Lecture Room 101 '
       m_Image: {fileID: 0}
       m_Color: {r: 1, g: 1, b: 1, a: 1}
-    - m_Text: ' Lecture Room 103'
+    - m_Text: Lecture Room 103
       m_Image: {fileID: 0}
       m_Color: {r: 1, g: 1, b: 1, a: 1}
     - m_Text: Study Area

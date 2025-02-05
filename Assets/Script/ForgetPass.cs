@@ -8,8 +8,11 @@ using Firebase.Extensions;
 public class ForgotPass : MonoBehaviour
 {
     public TMP_InputField emailInput;  
-    public TMP_Text feedbackText;  
     public Button resetPasswordButton;  
+
+    // Pop-up Panel
+    public GameObject alertPanel;
+    public TMP_Text alertText;
 
     private FirebaseAuth auth;
 
@@ -17,13 +20,15 @@ public class ForgotPass : MonoBehaviour
     {
         auth = FirebaseAuth.DefaultInstance;
         resetPasswordButton.onClick.AddListener(() => SendPasswordResetEmail(emailInput.text));
+
+        alertPanel.SetActive(false); // Ensure the alert panel starts hidden
     }
 
     void SendPasswordResetEmail(string email)
     {
         if (string.IsNullOrEmpty(email))
         {
-            feedbackText.text = "Please enter your email.";
+            ShowAlert("Please enter your email.");
             return;
         }
 
@@ -31,12 +36,12 @@ public class ForgotPass : MonoBehaviour
         {
             if (task.IsFaulted || task.IsCanceled)
             {
-                feedbackText.text = "Failed to send reset email: " + task.Exception?.GetBaseException().Message;
+                ShowAlert("Failed to send reset email: " + task.Exception?.GetBaseException().Message);
                 Debug.LogError("Error sending reset email: " + task.Exception?.ToString());
                 return;
             }
 
-            feedbackText.text = "Password reset email sent! Please check your inbox.";
+            ShowAlert("Password reset email sent! Please check your inbox.");
             Debug.Log("Password reset email sent to: " + email);
 
             // Redirect to login scene after 2 seconds
@@ -47,5 +52,20 @@ public class ForgotPass : MonoBehaviour
     void GoToLoginScene()
     {
         SceneManager.LoadScene("Login");
+    }
+
+    // Show the alert message in the pop-up panel
+    void ShowAlert(string message)
+    {
+        alertPanel.SetActive(true);
+        alertText.text = message;
+
+        CancelInvoke(nameof(HideAlert));
+        Invoke(nameof(HideAlert), 3f); // Auto-hide after 3 seconds
+    }
+
+    void HideAlert()
+    {
+        alertPanel.SetActive(false);
     }
 }
