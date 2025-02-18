@@ -1,66 +1,124 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;  // For RawImage
+using System.Collections;
 
 public class DestinationShow : MonoBehaviour
 {
-    [Header("Destination Objects")]
-    public GameObject LecRoom101;
-    public GameObject LecRoom103;
-    public GameObject StudyArea;
-    public GameObject StaffOffice1;
-    public GameObject StaffRoom2;
+    public GameObject[] destinationMarkers;  // Reference to all destination markers
+    public TMP_Dropdown destinationDropdown;  // Reference to the TMP Dropdown UI element
 
-    [Header("Marker Prefab")]
-    public GameObject markerPrefab; // Red location icon with a TextMeshPro label
+    // Manually assign RawImage and Text components for each destination
+    public RawImage[] rawImages;           // Array of RawImages for the destination markers
+    public TextMeshProUGUI[] texts;        // Array of TextMeshProUGUI for the destination markers
 
-    private GameObject currentMarker;
-    private Transform[] destinations;
-    private string[] destinationNames = { "Lecture Room 101", "Lecture Room 103", "Study Area", "Staff Office 1", "Staff Room 2" };
-    private int currentIndex = 0;
+    // Animation durations
+    public float scaleDuration = 0.5f;  // Duration for scaling
+    public float rotationDuration = 2f; // Duration for rotation
+    public float scaleFactor = 1.5f;    // Scale factor when selected
 
-    private void Start()
+    public void OnSearchClicked()
     {
-        // Store destinations in an array for easy cycling
-        destinations = new Transform[]
+        // Get the selected option from the TMP Dropdown
+        string selectedDestination = destinationDropdown.options[destinationDropdown.value].text;
+
+        Debug.Log("Search Button Clicked! Selected destination: " + selectedDestination);
+
+        // Print all marker names for debugging
+        foreach (GameObject marker in destinationMarkers)
         {
-            LecRoom101.transform,
-            LecRoom103.transform,
-            StudyArea.transform,
-            StaffOffice1.transform,
-            StaffRoom2.transform
-        };
-
-        // Instantiate the marker but hide it initially
-        currentMarker = Instantiate(markerPrefab);
-        currentMarker.SetActive(false);
-
-        // Show the initial marker
-        UpdateMarker();
-    }
-
-    public void CycleLeft()
-    {
-        currentIndex = (currentIndex - 1 + destinations.Length) % destinations.Length;
-        UpdateMarker();
-    }
-
-    public void CycleRight()
-    {
-        currentIndex = (currentIndex + 1) % destinations.Length;
-        UpdateMarker();
-    }
-
-    private void UpdateMarker()
-    {
-        // Show the marker at the current destination
-        currentMarker.SetActive(true);
-        currentMarker.transform.position = destinations[currentIndex].position + Vector3.up * 0.5f; // Adjust height above NavMesh
-
-        // Update the text label
-        TMP_Text label = currentMarker.GetComponentInChildren<TMP_Text>();
-        if (label != null)
-        {
-            label.text = destinationNames[currentIndex];
+            Debug.Log("Available marker: " + marker.name);
         }
+
+        // Try to find the corresponding marker by name
+        GameObject destinationMarker = System.Array.Find(destinationMarkers, marker => marker.name == selectedDestination);
+
+        if (destinationMarker != null)
+        {
+            Debug.Log("Found marker for: " + selectedDestination);
+            
+            // Disable all markers first
+            DisableAllMarkers();
+
+            // Enable the selected marker
+            destinationMarker.SetActive(true);
+
+            // Find the corresponding RawImage and Text components manually
+            int index = System.Array.IndexOf(destinationMarkers, destinationMarker);
+            RawImage rawImage = rawImages[index];    // Manually assigned RawImage
+            TextMeshProUGUI text = texts[index];      // Manually assigned TextMeshProUGUI
+
+            // Perform manual animations on RawImage and Text components
+            StartCoroutine(AnimateMarker(rawImage, text, destinationMarker));
+        }
+        else
+        {
+            Debug.LogWarning("No marker found for destination: " + selectedDestination);
+        }
+    }
+
+    private void DisableAllMarkers()
+    {
+        foreach (GameObject marker in destinationMarkers)
+        {
+            marker.SetActive(false);
+        }
+    }
+
+    private IEnumerator AnimateMarker(RawImage rawImage, TextMeshProUGUI text, GameObject marker)
+    {
+        // Scale animation for RawImage and Text
+        Vector3 originalScale = marker.transform.localScale;
+        Vector3 targetScale = originalScale * scaleFactor;  // Enlarge the marker by scaleFactor
+        float elapsedTime = 0;
+
+        // Smoothly scale the marker
+        while (elapsedTime < scaleDuration)
+        {
+            marker.transform.localScale = Vector3.Lerp(originalScale, targetScale, elapsedTime / scaleDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        marker.transform.localScale = targetScale;
+
+        // Rotate the marker
+        elapsedTime = 0;
+        float rotationSpeed = 360f;  // Rotate 360 degrees per second
+
+        while (elapsedTime < rotationDuration)
+        {
+            marker.transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Make sure the final rotation is applied
+        marker.transform.Rotate(Vector3.up * rotationSpeed * (rotationDuration - elapsedTime));
+
+        // Animation for RawImage (optional color change effect)
+        Color originalColor = rawImage.color;
+        Color targetColor = Color.green;  // Change to green when selected
+        elapsedTime = 0;
+
+        while (elapsedTime < scaleDuration)
+        {
+            rawImage.color = Color.Lerp(originalColor, targetColor, elapsedTime / scaleDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        rawImage.color = targetColor;
+
+        // Animation for Text (optional color change effect)
+        Color originalTextColor = text.color;
+        Color targetTextColor = Color.red;  // Change text color to red when selected
+        elapsedTime = 0;
+
+        while (elapsedTime < scaleDuration)
+        {
+            text.color = Color.Lerp(originalTextColor, targetTextColor, elapsedTime / scaleDuration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        text.color = targetTextColor;
     }
 }
