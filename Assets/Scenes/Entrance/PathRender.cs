@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
-using TMPro;  // Required for TextMeshPro
+using TMPro;
+using System.Collections.Generic;  // Required for TextMeshPro
 
 public class PathRender : MonoBehaviour
 {
@@ -45,7 +46,7 @@ public class PathRender : MonoBehaviour
         lineRenderer.positionCount = 0;
         lineRenderer.startWidth = 1.5f;
         lineRenderer.endWidth = 1.5f;
-        lineRenderer.material = dottedLineMaterial != null ? dottedLineMaterial : new Material(Shader.Find("Sprites/Default"));
+        lineRenderer.material = dottedLineMaterial != null ? dottedLineMaterial : new Material(Shader.Find("Custom/HiddenLineShader"));
         lineRenderer.startColor = Color.green;
         lineRenderer.endColor = Color.red;
         lineRenderer.useWorldSpace = true;
@@ -130,10 +131,21 @@ public class PathRender : MonoBehaviour
         {
             Vector3 start = path.corners[i];
             Vector3 end = path.corners[i + 1];
-            for (int j = 1; j <= smoothness; j++)
+
+            // Check if the path segment is visible, i.e., not blocked by a wall
+            if (IsPathVisible(start, end))
             {
-                float t = j / (float)(smoothness + 1);
-                smoothedPath.Add(Vector3.Lerp(start, end, t));
+                // Add smoothed points to the path if the segment is visible
+                for (int j = 1; j <= smoothness; j++)
+                {
+                    float t = j / (float)(smoothness + 1);
+                    smoothedPath.Add(Vector3.Lerp(start, end, t));
+                }
+            }
+            else
+            {
+                // Skip adding this segment if it's not visible
+                break;
             }
         }
 
@@ -150,6 +162,22 @@ public class PathRender : MonoBehaviour
 
         lineRenderer.material.mainTextureScale = new Vector2(dotSpacing, 1f);
     }
+
+
+    // Check if the path between two points is visible (not blocked by walls)
+    public bool IsPathVisible(Vector3 start, Vector3 end)
+    {
+        RaycastHit hit;
+        int wallLayer = LayerMask.GetMask("Wall"); // Get the Wall layer
+        Debug.DrawLine(start, end, Color.red);
+        if (Physics.Linecast(start, end, out hit, wallLayer))
+        {
+            return false; // There’s a wall in the way
+        }
+        return true; // The path is clear
+    }
+
+
 
     private float CalculatePathLength(System.Collections.Generic.List<Vector3> pathPoints)
     {
