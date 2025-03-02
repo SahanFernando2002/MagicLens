@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
-using TMPro;  // Required for TextMeshPro
+using TMPro;
+using UnityEngine.UI;  // Required for TextMeshPro
 
 public class PathRenderSO1 : MonoBehaviour
 {
@@ -12,10 +13,13 @@ public class PathRenderSO1 : MonoBehaviour
     private float turnAudioTimer = 0f;
     public float turnAudioInterval = 2f;
 
+    public Toggle soundToggle; 
+    private bool isSoundOn = true; 
+
     public float moveSpeed = 3f;
     private bool isPathValid = false;
     public int smoothness = 10;
-
+    public float visiblePathDistance = 2f;
     public float pathWidth = 0.3f;
     public float delayBeforeTracking = 2f;
     private float timeSincePathStart = 0f;
@@ -29,8 +33,8 @@ public class PathRenderSO1 : MonoBehaviour
     // Destination cubes
     public GameObject Entrance;
     public GameObject LecRoom101;
-    public GameObject LecRoom103;
     public GameObject StudyArea;
+    public GameObject LecRoom103;
     public GameObject StaffRoom2;
 
     private Transform currentDestination;
@@ -43,8 +47,8 @@ public class PathRenderSO1 : MonoBehaviour
     {
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = 0;
-        lineRenderer.startWidth = 0.8f;
-        lineRenderer.endWidth = 0.8f;
+        lineRenderer.startWidth = 1.5f;
+        lineRenderer.endWidth = 1.5f;
         lineRenderer.material = dottedLineMaterial != null ? dottedLineMaterial : new Material(Shader.Find("Sprites/Default"));
         lineRenderer.startColor = Color.green;
         lineRenderer.endColor = Color.red;
@@ -61,6 +65,11 @@ public class PathRenderSO1 : MonoBehaviour
 
         // Make sure the alert panel is hidden at start
         alertPanel.SetActive(false);
+
+        if (soundToggle != null)
+        {
+            soundToggle.onValueChanged.AddListener(ToggleSound);
+        }
     }
 
     void Update()
@@ -105,12 +114,23 @@ public class PathRenderSO1 : MonoBehaviour
         }
     }
 
+    public void ClearPath()
+    {
+        if (lineRenderer != null)
+        {
+            lineRenderer.positionCount = 0; // Clear all path points
+        }
+        isTrackingEnabled = false; // Reset tracking state
+        timeSincePathStart = 0f; // Reset path timing
+        isPathValid = false; // Invalidate the path
+    }
+
     Transform GetActiveDestination()
     {
         if (Entrance.activeSelf) return Entrance.transform;
         if (LecRoom101.activeSelf) return LecRoom101.transform;
-        if (LecRoom103.activeSelf) return LecRoom103.transform;
         if (StudyArea.activeSelf) return StudyArea.transform;
+        if (LecRoom103.activeSelf) return LecRoom103.transform;
         if (StaffRoom2.activeSelf) return StaffRoom2.transform;
         return null;
     }
@@ -123,32 +143,38 @@ public class PathRenderSO1 : MonoBehaviour
             return;
         }
 
-        // Smooth the path
-        System.Collections.Generic.List<Vector3> smoothedPath = new System.Collections.Generic.List<Vector3> { path.corners[0] };
+        System.Collections.Generic.List<Vector3> visiblePath = new System.Collections.Generic.List<Vector3>();
+        float distanceCovered = 0f;
+        Vector3 lastPosition = player.position;
 
-        for (int i = 0; i < path.corners.Length - 1; i++)
+        // Iterate through path corners to show only what's ahead
+        for (int i = 0; i < path.corners.Length; i++)
         {
-            Vector3 start = path.corners[i];
-            Vector3 end = path.corners[i + 1];
-            for (int j = 1; j <= smoothness; j++)
+            Vector3 corner = path.corners[i];
+            distanceCovered += Vector3.Distance(lastPosition, corner);
+
+            if (distanceCovered <= visiblePathDistance)
             {
-                float t = j / (float)(smoothness + 1);
-                smoothedPath.Add(Vector3.Lerp(start, end, t));
+                visiblePath.Add(corner);
             }
+            else
+            {
+                // Calculate the point along the next segment where the "visible distance" ends
+                float remainingDistance = visiblePathDistance - (distanceCovered - Vector3.Distance(lastPosition, corner));
+                Vector3 direction = (corner - lastPosition).normalized;
+                Vector3 visiblePoint = lastPosition + direction * remainingDistance;
+                visiblePath.Add(visiblePoint);
+                break;
+            }
+
+            lastPosition = corner;
         }
 
-        smoothedPath.Add(path.corners[path.corners.Length - 1]);
-        lineRenderer.positionCount = smoothedPath.Count;
-
-        for (int i = 0; i < smoothedPath.Count; i++)
+        lineRenderer.positionCount = visiblePath.Count;
+        for (int i = 0; i < visiblePath.Count; i++)
         {
-            lineRenderer.SetPosition(i, smoothedPath[i]);
+            lineRenderer.SetPosition(i, visiblePath[i]);
         }
-
-        float pathLength = CalculatePathLength(smoothedPath);
-        float dotSpacing = pathLength / 150f;
-
-        lineRenderer.material.mainTextureScale = new Vector2(dotSpacing, 1f);
     }
 
     private float CalculatePathLength(System.Collections.Generic.List<Vector3> pathPoints)
@@ -191,10 +217,12 @@ public class PathRenderSO1 : MonoBehaviour
                 if (angle > 0)
                 {
                     PlayAudioClip(rightTurnClip, "Right Turn Detected!");
+                    ShowTurnAlert("Turn Right");
                 }
                 else
                 {
                     PlayAudioClip(leftTurnClip, "Left Turn Detected!");
+                    ShowTurnAlert("Turn Left");
                 }
             }
 
@@ -202,17 +230,38 @@ public class PathRenderSO1 : MonoBehaviour
         }
     }
 
+    private void ToggleSound(bool isOn)
+    {
+        isSoundOn = isOn;
+        Debug.Log("Sound is now " + (isSoundOn ? "ON" : "OFF"));
+    }
+
     private void PlayAudioClip(AudioClip clip, string logMessage)
     {
-        if (clip != null && !audioSource.isPlaying)
+        if (isSoundOn && clip != null && !audioSource.isPlaying)
         {
             if (turnAudioTimer >= turnAudioInterval)
             {
                 audioSource.PlayOneShot(clip);
                 Debug.Log(logMessage);
-                turnAudioTimer = 0f;
+                turnAudioTimer = 0f; // Reset timer after playing
             }
         }
+    }
+
+
+    private void ShowTurnAlert(string message)
+    {
+        alertPanel.SetActive(true);
+        alertText.text = message;
+
+        CancelInvoke(nameof(HideTurnAlert));
+        Invoke(nameof(HideTurnAlert), 2f); 
+    }
+
+    private void HideTurnAlert()
+    {
+        alertPanel.SetActive(false); // Hide the pop-up
     }
 
     private void CheckHalfwayThroughPath(NavMeshPath path)
@@ -233,9 +282,9 @@ public class PathRenderSO1 : MonoBehaviour
     private string GetActiveDestinationName()
     {
         if (Entrance.activeSelf) return "Entrance";
-        if (LecRoom101.activeSelf) return "LectureRoom101";
-        if (LecRoom103.activeSelf) return "LectureRoom103";
+        if (LecRoom101.activeSelf) return "LecRoom101";
         if (StudyArea.activeSelf) return "StudyArea";
+        if (LecRoom103.activeSelf) return "LecRoom103";
         if (StaffRoom2.activeSelf) return "StaffRoom2";
         return "Unknown";
     }
